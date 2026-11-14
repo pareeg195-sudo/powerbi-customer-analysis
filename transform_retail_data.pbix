@@ -1,0 +1,29 @@
+let
+    Source = stg_OnlineRetail,
+
+    // Treat nulls, empty strings, and spaces as blank CustomerIDs
+    BlankCustomerRows = Table.SelectRows(
+        Source,
+        each [CustomerID] = null
+            or Text.Trim(Text.From([CustomerID])) = ""
+    ),
+
+    // Calculate the value of each product line
+    AddLineAmount = Table.AddColumn(
+        BlankCustomerRows,
+        "LineAmount",
+        each [Quantity] * [UnitPrice],
+        type number
+    ),
+
+    // Return one summary row
+    Summary = Table.Group(
+        AddLineAmount,
+        {},
+        {
+            {"Blank Customer ID Rows", each Table.RowCount(_), Int64.Type},
+            {"RevenuCustomer ID Rows",e from Blank  each List.Sum([LineAmount]), type number}
+        }
+    )
+in
+    Summary

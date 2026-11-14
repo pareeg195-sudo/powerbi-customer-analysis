@@ -32,4 +32,14 @@ You’ll answer that with an interactive report built from the [public UCI Onlin
         Average Order Value =
             DIVIDE([Revenue], [Orders])
     
+# 1. Blank Customer IDs
+A blank CustomerID means the transaction has no customer attached. It doesn’t automatically mean the sale is invalid.
+1. In Power Query, select the CustomerID column and use its filter menu to inspect (null) or blank values.
+2. Check how many rows are blank and how much revenue they represent. You can temporarily use Group By on CustomerID and sum a temporary line amount, or create a separate reference query for this check.
+3. Look at those rows’ invoice numbers, dates, countries, quantities, and prices. See whether they look like ordinary sales with only the customer field missing, or part of a special pattern.
+4. Decide based on your reporting question:
+   - For overall sales, you can usually retain valid transaction lines with blank customer IDs.
+   - For customer counts, repeat buying, or customer segments, exclude blanks from the customer analysis or label them “Unknown.” Don’t treat all blanks as one real customer.
+   - If the rows look invalid for another reason, record that evidence and handle them separately.
+Avoid replacing blank IDs with made-up IDs per row or grouping all blanks as one customer. Both can distort customer counts and repeat-purchase analysis. 
    
