@@ -1,0 +1,79 @@
+let
+    Source = Excel.Workbook(
+        File.Contents("C:\Manju\powerbi projects\dataset\online+retail\Online Retail.xlsx"),
+        null,
+        true
+    ),
+
+    RetailSheet = Source{[Item="Online Retail", Kind="Sheet"]}[Data],
+
+    PromotedHeaders = Table.PromoteHeaders(
+        RetailSheet,
+        [PromoteAllScalars=true]
+    ),
+
+    ChangedTypes = Table.TransformColumnTypes(
+        PromotedHeaders,
+        {
+            {"InvoiceNo", type text},
+            {"StockCode", type text},
+            {"Description", type text},
+            {"Quantity", Int64.Type},
+            {"InvoiceDate", type datetime},
+            {"UnitPrice", type number},
+            {"CustomerID", type text},
+            {"Country", type text}
+        }
+    ),
+
+    BlankCustomerRows = Table.SelectRows(
+        ChangedTypes,
+        each
+            let
+                Customer = [CustomerID]
+            in
+                Customer = null or Text.Trim(Customer) = ""
+    ),
+
+    AddLineAmount = Table.AddColumn(
+        BlankCustomerRows,
+        "LineAmount",
+        each [Quantity] * [UnitPrice],
+        type number
+    ),
+
+    AddIsCancellation = Table.AddColumn(
+        AddLineAmount,
+        "IsCancellation",
+        each Text.StartsWith([InvoiceNo], "C", Comparer.OrdinalIgnoreCase),
+        type logical
+    ),
+
+    AddQuantityType = Table.AddColumn(
+        AddIsCancellation,
+        "QuantityType",
+        each
+            if [Quantity] < 0 then "Negative"
+            else if [Quantity] = 0 then "Zero"
+            else "Positive",
+        type text
+    ),
+
+    SelectedColumns = Table.SelectColumns(
+        AddQuantityType,
+        {
+            "InvoiceNo",
+            "InvoiceDate",
+            "Country",
+            "StockCode",
+            "Description",
+            "Quantity",
+            "UnitPrice",
+            "LineAmount",
+            "CustomerID",
+            "IsCancellation",
+            "QuantityType"
+        }
+    )
+in
+    SelectedColumns
